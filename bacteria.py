@@ -20,7 +20,7 @@ plt.xlim(XLIM)
 plt.ylim(YLIM)
 plt.gca().axes.set_aspect(1)
 
-DROP_FOOD_EACH_N_STEPS = 30  # Drops anyway if there is no more food left
+DROP_FOOD_EACH_N_STEPS = 30
 FOOD_MIN_ENERGY = 10
 FOOD_MAX_ENERGY = 100
 
@@ -116,7 +116,7 @@ death_markers = []
 death_markers_to_be_removed = []
 while True:
     # Drop food:
-    if step % DROP_FOOD_EACH_N_STEPS == 0 or not food_sources:
+    if step % DROP_FOOD_EACH_N_STEPS == 0:
         Food()
 
     # Draw:
@@ -136,47 +136,54 @@ while True:
         plt.ylim(YLIM)
         plt.gca().axes.set_aspect(1)
 
+    # Spend energy no matter what:
+    for b in bacteria:
+        b.energy -= 0.1
+        if b.energy <= 0:
+            death_list.append(b)
+
     # Movement and eating:
     for b in bacteria:
-        if not b.eating:
-            f = b.closest_food()
-            if f:
-                dist = ((f.x - b.x)**2 + (f.y - b.y)**2)**0.5
-                if dist > f.radius:  # Too far => move closer
-                    # Calculating new coordinates
-                    A = f.x - b.x
-                    B = f.y - b.y
-                    C = (A**2 + B**2)**0.5
-                    dist_to_move = min(b.speed, C - f.radius)  # No need to overshoot
-                    x = A/C * dist_to_move
-                    y = B/A * x
+        if b not in death_list:
+            if not b.eating:
+                f = b.closest_food()
+                if f:
+                    dist = ((f.x - b.x)**2 + (f.y - b.y)**2)**0.5
+                    if dist > f.radius:  # Too far => move closer
+                        # Calculating new coordinates
+                        A = f.x - b.x
+                        B = f.y - b.y
+                        C = (A**2 + B**2)**0.5
+                        dist_to_move = min(b.speed, C - f.radius)  # No need to overshoot
+                        x = A/C * dist_to_move
+                        y = B/A * x
 
-                    # If you can't reach food, die now:
-                    energy_to_be_removed = dist_to_move * b.speed
-                    if b.energy - energy_to_be_removed <= 0:  # Out of energy => death sentence:
-                        death_list.append(b)
-                    else:
-                        b.energy -= energy_to_be_removed
-                        b.x += x
-                        b.y += y
+                        # If you can't reach food, die now:
+                        energy_to_be_removed = dist_to_move * b.speed
+                        if b.energy - energy_to_be_removed <= 0:  # Out of energy => death sentence:
+                            death_list.append(b)
+                        else:
+                            b.energy -= energy_to_be_removed
+                            b.x += x
+                            b.y += y
 
-                else:  # No need to move => eat
-                    b.eating = True
-                    b.food = f
-                    f.eating_b.append(b)
-        else:  # Eating
-            f = b.food
-            f.energy -= 1
-            b.energy += 1
-            if f.energy <= 0:
-                for b_ in f.eating_b:
-                    b_.eating = False
-                    b_.food = None
-                food_sources.remove(f)
-            if b.energy >= b.max_energy:
-                print(f'Reproduction! Step: {step}')
-                b.reproduce()
-                reproduced += 1
+                    else:  # No need to move => eat
+                        b.eating = True
+                        b.food = f
+                        f.eating_b.append(b)
+            else:  # Eating
+                f = b.food
+                f.energy -= 1
+                b.energy += 1
+                if f.energy <= 0:
+                    for b_ in f.eating_b:
+                        b_.eating = False
+                        b_.food = None
+                    food_sources.remove(f)
+                if b.energy >= b.max_energy:
+                    print(f'Reproduction! Step: {step}')
+                    b.reproduce()
+                    reproduced += 1
 
     # Death:
     for b in death_list:
@@ -226,3 +233,4 @@ if MAKE_GIF:
     for filename in filenames:
         images.append(imageio.imread(f'./runs/{TIME}' + '/' + filename))
     imageio.mimsave('demo.gif', images, duration=FRAME_DURATION)
+    print('GIF created')
