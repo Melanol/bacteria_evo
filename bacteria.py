@@ -4,7 +4,11 @@ import datetime
 import math
 
 import matplotlib.pyplot as plt
+import imageio
 
+
+MAKE_GIF = True
+FRAME_DURATION = 0.3
 
 STEPS = 100
 
@@ -215,3 +219,10 @@ while True:
         print(f'Initial number: {BACTERIA_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
         break
     step += 1
+
+if MAKE_GIF:
+    filenames = sorted(os.listdir(f'./runs/{TIME}'), key=lambda x: int(x[:-4]))
+    images = []
+    for filename in filenames:
+        images.append(imageio.imread(f'./runs/{TIME}' + '/' + filename))
+    imageio.mimsave('demo.gif', images, duration=FRAME_DURATION)
