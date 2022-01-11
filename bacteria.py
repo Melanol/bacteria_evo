@@ -181,7 +181,7 @@ while True:
         died += 1
     death_list = []
 
-    # Finishing the simulation:
+    # Finishing the run:
     if step == STEPS:
         print()
         print('Survivors (speed, max energy):')
