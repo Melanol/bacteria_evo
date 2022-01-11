@@ -16,7 +16,7 @@ plt.xlim(XLIM)
 plt.ylim(YLIM)
 plt.gca().axes.set_aspect(1)
 
-DROP_FOOD_EACH_N_STEPS = 30
+DROP_FOOD_EACH_N_STEPS = 30  # Drops anyway if there is no more food left
 FOOD_MIN_ENERGY = 10
 FOOD_MAX_ENERGY = 100
 
@@ -27,6 +27,7 @@ MUTATION_CHANCE = 1
 MUTATION_VARIANCE = 0.1
 
 SAVE_IMAGE_EACH_N_STEPS = 1
+DEATH_MARKERS_PERSIST_FOR_N_STEPS = 3
 INIT_EXPLR_RATE = 1
 EXPLR_RATE_DECREASE = 0.9  # Multiply
 MIN_EXPLR = 0.001
@@ -49,7 +50,6 @@ class Food:
 
 
 bacteria = []
-death_list = []
 class Bacterium:
     def __init__(self, x=None, y=None, speed=None, max_energy=None):
         if not x and not y:
@@ -68,6 +68,7 @@ class Bacterium:
         bacteria.append(self)
 
     def color(self):
+        # RGB. Red for speed, green for max energy
         return min(self.speed / MAX_START_SPEED, 1), min(self.max_energy / BACTERIA_MAX_START_ENERGY, 1), 1
 
     def closest_food(self):
@@ -106,6 +107,9 @@ Food()
 step = 1
 reproduced = 0
 died = 0
+death_list = []
+death_markers = []
+death_markers_to_be_removed = []
 while True:
     # Drop food:
     if step % DROP_FOOD_EACH_N_STEPS == 0 or not food_sources:
@@ -118,7 +122,8 @@ while True:
             plt.gca().add_patch(circle)
         for b in bacteria:
             plt.scatter(b.x, b.y, color=b.color(), marker='s')
-            # print(bacterium.speed, bacterium.max_energy)
+        for m in death_markers:
+            plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
 
         plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
         plt.savefig(f'./runs/{TIME}/{step}', bbox_inches='tight')
@@ -173,8 +178,16 @@ while True:
         except AttributeError:
             pass
         bacteria.remove(b)
+        death_markers.append((b.x, b.y, step + DEATH_MARKERS_PERSIST_FOR_N_STEPS))
         died += 1
     death_list = []
+
+    for m in death_markers:
+        if m[2] == step:
+            death_markers_to_be_removed.append(m)
+    for m in death_markers_to_be_removed:
+        death_markers.remove(m)
+    death_markers_to_be_removed = []
 
     # Finishing the run:
     if step == STEPS:
