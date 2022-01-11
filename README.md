@@ -1,0 +1,2 @@
+The faster you move, the more energy you consume. Food drops randomly. Specimens mutate randomly.
+To reproduce, a specimen needs to reach max energy, the resulting 2 new specimens have half of its max energy.

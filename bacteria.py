@@ -5,10 +5,6 @@ import math
 
 import matplotlib.pyplot as plt
 
-"""
-The faster you move, the more energy you consume. Food drops randomly. Agents mutate randomly.
-To reproduce, a specimen needs to reach max energy, the resulting 2 new specimens have half of its max energy.
-"""
 
 STEPS = 100
 
@@ -26,7 +22,6 @@ FOOD_MAX_ENERGY = 100
 
 BACTERIA_N = 10
 MAX_START_SPEED = 5
-SPEED_ENERGY_CONSUMPTION_MULT = 0.5  # How punishing it is to be too fast
 BACTERIA_MAX_START_ENERGY = 100
 MUTATION_CHANCE = 1
 MUTATION_VARIANCE = 0.1
@@ -143,13 +138,13 @@ while True:
                     A = f.x - b.x
                     B = f.y - b.y
                     C = (A**2 + B**2)**0.5
-                    dist_to_move = min(b.speed, C - f.radius)
+                    dist_to_move = min(b.speed, C - f.radius)  # No need to overshoot
                     x = A/C * dist_to_move
                     y = B/A * x
                     b.x += x
                     b.y += y
 
-                    b.energy -= dist_to_move * b.speed * SPEED_ENERGY_CONSUMPTION_MULT
+                    b.energy -= dist_to_move * b.speed
                     if b.energy <= 0:  # Out of energy => death sentence:
                         death_list.append(b)
                 else:  # No need to move => eat
