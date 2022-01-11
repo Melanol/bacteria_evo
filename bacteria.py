@@ -146,12 +146,16 @@ while True:
                     dist_to_move = min(b.speed, C - f.radius)  # No need to overshoot
                     x = A/C * dist_to_move
                     y = B/A * x
-                    b.x += x
-                    b.y += y
 
-                    b.energy -= dist_to_move * b.speed
-                    if b.energy <= 0:  # Out of energy => death sentence:
+                    # If you can't reach food, die now:
+                    energy_to_be_removed = dist_to_move * b.speed
+                    if b.energy - energy_to_be_removed <= 0:  # Out of energy => death sentence:
                         death_list.append(b)
+                    else:
+                        b.energy -= energy_to_be_removed
+                        b.x += x
+                        b.y += y
+
                 else:  # No need to move => eat
                     b.eating = True
                     b.food = f
