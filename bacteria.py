@@ -10,7 +10,7 @@ The faster you move, the more energy you consume. Food drops randomly. Agents mu
 To reproduce, a specimen needs to reach max energy, the resulting 2 new specimens have half of its max energy.
 """
 
-STEPS = 1000
+STEPS = 100
 
 TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 os.makedirs(f'./runs/{TIME}')
@@ -49,7 +49,7 @@ class Food:
         self.x, self.y = drop()
         self.energy = random.randint(FOOD_MIN_ENERGY, FOOD_MAX_ENERGY)
         self.radius = self.energy / 20
-        self.feeding_b = []
+        self.eating_b = []
         food_sources.append(self)
 
 
@@ -68,7 +68,8 @@ class Bacterium:
             self.speed = speed
             self.max_energy = max_energy
         self.energy = self.max_energy / 2
-        self.feeding = False
+        self.eating = False
+        self.food = None
         bacteria.append(self)
 
     def color(self):
@@ -111,7 +112,7 @@ step = 1
 reproduced = 0
 died = 0
 while True:
-    # Food:
+    # Drop food:
     if step % DROP_FOOD_EACH_N_STEPS == 0 or not food_sources:
         Food()
 
@@ -131,13 +132,14 @@ while True:
         plt.ylim(YLIM)
         plt.gca().axes.set_aspect(1)
 
-    # Movement and feeding:
+    # Movement and eating:
     for b in bacteria:
-        if not b.feeding:
+        if not b.eating:
             f = b.closest_food()
             if f:
                 dist = ((f.x - b.x)**2 + (f.y - b.y)**2)**0.5
-                if dist > f.radius:  # Move
+                if dist > f.radius:  # Too far => move closer
+                    # Calculating new coordinates
                     A = f.x - b.x
                     B = f.y - b.y
                     C = (A**2 + B**2)**0.5
@@ -147,27 +149,39 @@ while True:
                     b.x += x
                     b.y += y
 
-                    # Death sentence:
                     b.energy -= dist_to_move * b.speed * SPEED_ENERGY_CONSUMPTION_MULT
-                    if b.energy <= 0:
+                    if b.energy <= 0:  # Out of energy => death sentence:
                         death_list.append(b)
-                else:  # Eat
-                    b.feeding = True
-                    f.energy -= 1
-                    b.energy += 1
-                    if f.energy == 0:
-                        food_sources.remove(f)
-                    if b.energy >= b.max_energy:
-                        print(f'Reproduction! Step: {step}')
-                        b.reproduce()
-                        reproduced += 1
+                else:  # No need to move => eat
+                    b.eating = True
+                    b.food = f
+                    f.eating_b.append(b)
+        else:  # Eating
+            f = b.food
+            f.energy -= 1
+            b.energy += 1
+            if f.energy <= 0:
+                for b_ in f.eating_b:
+                    b_.eating = False
+                    b_.food = None
+                food_sources.remove(f)
+            if b.energy >= b.max_energy:
+                print(f'Reproduction! Step: {step}')
+                b.reproduce()
+                reproduced += 1
 
     # Death:
     for b in death_list:
         print(f'Death! Step: {step}')
+        try:
+            b.food.eating_b.remove(b)
+        except AttributeError:
+            pass
         bacteria.remove(b)
         died += 1
     death_list = []
+
+    # Finishing the simulation:
     if step == STEPS:
         print()
         print('Survivors (speed, max energy):')
