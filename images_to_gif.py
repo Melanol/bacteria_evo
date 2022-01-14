@@ -11,9 +11,10 @@ list_of_folders = glob.glob('./runs/*')
 latest_folder = max(list_of_folders, key=os.path.getctime)
 print(latest_folder)
 
-filenames = sorted(os.listdir(latest_folder), key=lambda x: int(x[:-4]))
+filenames = sorted(os.listdir(latest_folder + '/images'), key=lambda x: int(x[:-4]))
 print(filenames)
 images = []
 for filename in filenames:
-    images.append(imageio.imread(latest_folder + '/' + filename))
+    images.append(imageio.imread(latest_folder + '/images/' + filename))
 imageio.mimsave('demo.gif', images, duration=FRAME_DURATION)
+print('GIF created')
