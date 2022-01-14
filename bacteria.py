@@ -12,7 +12,7 @@ import imageio
 MAKE_GIF = False
 FRAME_DURATION = 0.3
 
-STEPS = 500
+STEPS = 100
 
 TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 os.makedirs(f'./runs/{TIME}')
@@ -27,7 +27,7 @@ DROP_FOOD_EACH_N_STEPS = 5
 FOOD_MIN_ENERGY = 10
 FOOD_MAX_ENERGY = 100
 
-ADAMS_N = 1
+ADAMS_N = 5
 MAX_START_SPEED = 5
 RAND_MOVE_AMPLITUTE = 0.03  # Adding randomness to movement to avoid bacterial singularity
 BACTERIA_MAX_START_ENERGY = 100
@@ -265,30 +265,30 @@ plt.plot(graph_points[0], graph_points[1])
 plt.title('Population graph')
 plt.savefig(f'./runs/{TIME}/population graph.png')
 
-# Evo tree:
+# Evo forest:
 plt.clf()
 plt.gca().get_yaxis().set_visible(False)
 for b in all_bacteria_ever_lived:
     if not b.death_step:  # No death_step because alive at the end of the run
         b.death_step = step
-all_bacteria_ever_lived.sort(key=lambda c: int(c.birth_step), reverse=True)
 y = 0
-for b in all_bacteria_ever_lived:
-    # if b.parent:
-    #     plt.plot((b.birth_step, b.birth_step, b.death_step), (b.parent.evo_tree_y, y, y), color=b.color())
-    # else:
-    #     plt.plot((b.birth_step, b.death_step), (y, y), color=b.color())
-    #     b.evo_tree_y = y
-    if not b.parent:  # Adams
-        b.children.sort(key=lambda c: int(c.birth_step), reverse=True)
-        plt.plot((b.birth_step, b.death_step), (y, y), color=b.color())
-        b.evo_tree_y = y
-        y += 1
-        for c in b.children:
-            # print(c.parent)
-            plt.plot((c.birth_step, c.birth_step, c.death_step), (c.parent.evo_tree_y, y, y), color=c.color())
-            y += 1
-# plt.savefig(f'./runs/{TIME}/evo tree.png')
+def tree(b):
+    global y
+    b.children.sort(key=lambda c: int(c.birth_step), reverse=True)
+    b.evo_forest_y = y
+    y += 1
+    for c in b.children:
+        tree(c)
+    plt.plot((b.birth_step, b.birth_step, b.death_step), (b.parent.evo_forest_y, b.evo_forest_y, b.evo_forest_y), color=b.color())
+adams = [b for b in all_bacteria_ever_lived if not b.parent]
+for adam in adams:
+    adam.evo_forest_y = y
+    plt.plot((adam.birth_step, adam.death_step), (adam.evo_forest_y, adam.evo_forest_y), color=adam.color())
+    y += 1
+    adam.children.sort(key=lambda c: int(c.birth_step), reverse=True)
+    for c in adam.children:
+        tree(c)
+# plt.savefig(f'./runs/{TIME}/evo forest.png')
 plt.show()
 
 # GIF:
