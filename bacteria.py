@@ -255,7 +255,7 @@ while True:
 plt.clf()
 plt.fill_between(graph_points[0], graph_points[1])
 plt.title('Population graph')
-plt.savefig(f'./runs/{TIME}/population graph.png')
+plt.savefig(f'./runs/{TIME}/population_graph.png')
 
 # Evo forest:
 plt.clf()
@@ -281,7 +281,7 @@ for adam in adams:
     for c in adam.children:
         tree(c)
 plt.title('Evo forest')
-plt.savefig(f'./runs/{TIME}/evo forest.png')
+plt.savefig(f'./runs/{TIME}/evo_forest.png')
 
 # GIF:
 if MAKE_GIF:
