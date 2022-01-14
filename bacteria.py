@@ -9,10 +9,10 @@ import imageio
 
 # TODO: Random movement not allowing to get inside a food source in 1 turn
 
-MAKE_GIF = True
+MAKE_GIF = False
 FRAME_DURATION = 0.3
 
-STEPS = 100
+STEPS = 500
 
 TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 os.makedirs(f'./runs/{TIME}')
@@ -27,7 +27,7 @@ DROP_FOOD_EACH_N_STEPS = 5
 FOOD_MIN_ENERGY = 10
 FOOD_MAX_ENERGY = 100
 
-BACTERIA_N = 10
+ADAMS_N = 1
 MAX_START_SPEED = 5
 RAND_MOVE_AMPLITUTE = 0.03  # Adding randomness to movement to avoid bacterial singularity
 BACTERIA_MAX_START_ENERGY = 100
@@ -58,8 +58,9 @@ class Food:
 
 
 bacteria = []
+all_bacteria_ever_lived = []
 class Bacterium:
-    def __init__(self, x=None, y=None, speed=None, max_energy=None):
+    def __init__(self, x=None, y=None, speed=None, max_energy=None, birth_step=1, parent=None):
         if not x and not y:
             self.x, self.y = drop()
         else:
@@ -70,10 +71,15 @@ class Bacterium:
         else:
             self.speed = speed
             self.max_energy = max_energy
+        self.birth_step = birth_step
+        self.parent = parent
+        self.children = []
+        self.death_step = None
         self.energy = self.max_energy / 2
         self.eating = False
         self.food = None
         bacteria.append(self)
+        all_bacteria_ever_lived.append(self)
 
     def color(self):
         # RGB. Red for speed, green for max energy
@@ -108,16 +114,17 @@ class Bacterium:
         else:
             return attr
 
-    def reproduce(self):
+    def reproduce(self, step):
         """Splitting in 2, both having energy = max_energy/2. The parent needs to have max energy to reproduce"""
         speed = self.mutation_calc(self.speed)
         max_energy = self.mutation_calc(self.max_energy)
         # Spawning close to the parent:
         new_b_x = self.x + random.uniform(-0.5, 0.5)
         new_b_y = self.y + random.uniform(-0.5, 0.5)
-        Bacterium(new_b_x, new_b_y, speed, max_energy)
+        child = Bacterium(new_b_x, new_b_y, speed, max_energy, birth_step=step, parent=self)
+        self.children.append(child)
 
-for _ in range(BACTERIA_N):
+for _ in range(ADAMS_N):
     Bacterium()
 
 
@@ -135,21 +142,21 @@ while True:
         Food()
 
     # Draw:
-    if step % SAVE_IMAGE_EACH_N_STEPS == 0:
-        for f in food_sources:
-            circle = plt.Circle((f.x, f.y), f.radius, color='y', alpha=f.energy / (f.radius * 20))
-            plt.gca().add_patch(circle)
-        for b in bacteria:
-            plt.scatter(b.x, b.y, color=b.color())
-        for m in death_markers:
-            plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
-
-        plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
-        plt.savefig(f'./runs/{TIME}/images/{step}')
-        plt.clf()
-        plt.xlim(XLIM)
-        plt.ylim(YLIM)
-        plt.gca().axes.set_aspect(1)
+    # if step % SAVE_IMAGE_EACH_N_STEPS == 0:
+    #     for f in food_sources:
+    #         circle = plt.Circle((f.x, f.y), f.radius, color='y', alpha=f.energy / (f.radius * 20))
+    #         plt.gca().add_patch(circle)
+    #     for b in bacteria:
+    #         plt.scatter(b.x, b.y, color=b.color())
+    #     for m in death_markers:
+    #         plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
+    #
+    #     plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
+    #     plt.savefig(f'./runs/{TIME}/images/{step}')
+    #     plt.clf()
+    #     plt.xlim(XLIM)
+    #     plt.ylim(YLIM)
+    #     plt.gca().axes.set_aspect(1)
 
     # Spend energy no matter what:
     for b in bacteria:
@@ -202,7 +209,7 @@ while True:
                     food_sources.remove(f)
                 if b.energy >= b.max_energy:
                     print(f'Reproduction! Step: {step}')
-                    b.reproduce()
+                    b.reproduce(step)
                     reproduced += 1
 
     # Death:
@@ -212,6 +219,7 @@ while True:
             b.food.eating_b.remove(b)
         except AttributeError:
             pass
+        b.death_step = step
         bacteria.remove(b)
         death_markers.append((b.x, b.y, step + DEATH_MARKERS_PERSIST_FOR_N_STEPS))
         died += 1
@@ -242,21 +250,48 @@ while True:
             print(round(b.speed, 2), round(b.max_energy, 2))
         print(f'Survivors mean speed: {round(b_speed_sum/b_n, 2)};', end=' ')
         print(f'Survivors mean max energy: {round(b_max_energy_sum/b_n, 2)}')
-        print(f'Initial number: {BACTERIA_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
+        print(f'Initial number: {ADAMS_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
         break
     elif not bacteria:
         print()
         print("Everyone died!")
-        print(f'Initial number: {BACTERIA_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
+        print(f'Initial number: {ADAMS_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
         break
     step += 1
 
-
+# Population graph:
 plt.clf()
 plt.plot(graph_points[0], graph_points[1])
 plt.title('Population graph')
-plt.savefig(f'./runs/{TIME}/Population graph.png')
+plt.savefig(f'./runs/{TIME}/population graph.png')
 
+# Evo tree:
+plt.clf()
+plt.gca().get_yaxis().set_visible(False)
+for b in all_bacteria_ever_lived:
+    if not b.death_step:  # No death_step because alive at the end of the run
+        b.death_step = step
+all_bacteria_ever_lived.sort(key=lambda c: int(c.birth_step), reverse=True)
+y = 0
+for b in all_bacteria_ever_lived:
+    # if b.parent:
+    #     plt.plot((b.birth_step, b.birth_step, b.death_step), (b.parent.evo_tree_y, y, y), color=b.color())
+    # else:
+    #     plt.plot((b.birth_step, b.death_step), (y, y), color=b.color())
+    #     b.evo_tree_y = y
+    if not b.parent:  # Adams
+        b.children.sort(key=lambda c: int(c.birth_step), reverse=True)
+        plt.plot((b.birth_step, b.death_step), (y, y), color=b.color())
+        b.evo_tree_y = y
+        y += 1
+        for c in b.children:
+            # print(c.parent)
+            plt.plot((c.birth_step, c.birth_step, c.death_step), (c.parent.evo_tree_y, y, y), color=c.color())
+            y += 1
+# plt.savefig(f'./runs/{TIME}/evo tree.png')
+plt.show()
+
+# GIF:
 if MAKE_GIF:
     filenames = sorted(os.listdir(f'./runs/{TIME}/images'), key=lambda x: int(x[:-4]))
     images = []
