@@ -16,6 +16,7 @@ STEPS = 100
 
 TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 os.makedirs(f'./runs/{TIME}')
+os.makedirs(f'./runs/{TIME}/images')
 XLIM = [-5, 5]
 YLIM = [-5, 5]
 plt.xlim(XLIM)
@@ -144,7 +145,7 @@ while True:
             plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
 
         plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
-        plt.savefig(f'./runs/{TIME}/{step}', bbox_inches='tight')
+        plt.savefig(f'./runs/{TIME}/images/{step}')
         plt.clf()
         plt.xlim(XLIM)
         plt.ylim(YLIM)
@@ -253,12 +254,13 @@ while True:
 
 plt.clf()
 plt.plot(graph_points[0], graph_points[1])
-plt.show()
+plt.title('Population graph')
+plt.savefig(f'./runs/{TIME}/Population graph.png')
 
 if MAKE_GIF:
-    filenames = sorted(os.listdir(f'./runs/{TIME}'), key=lambda x: int(x[:-4]))
+    filenames = sorted(os.listdir(f'./runs/{TIME}/images'), key=lambda x: int(x[:-4]))
     images = []
     for filename in filenames:
-        images.append(imageio.imread(f'./runs/{TIME}' + '/' + filename))
-    imageio.mimsave('demo.gif', images, duration=FRAME_DURATION)
+        images.append(imageio.imread(f'./runs/{TIME}/images/{filename}'))
+    imageio.mimsave(f'./runs/{TIME}/demo.gif', images, duration=FRAME_DURATION)
     print('GIF created')
