@@ -5,5 +5,5 @@ To reproduce, a specimen needs to reach max energy, the resulting 2 new specimen
 Redness of a specimen represents its speed, greenness - max energy.
 
 ![demo.gif](https://github.com/Melanol/bacteria_evo/blob/master/demo.gif "demo")
-![evo forest.png](https://github.com/Melanol/bacteria_evo/blob/master/evo forest.png "evo forest")
-![population graph.png](https://github.com/Melanol/bacteria_evo/blob/master/population graph.png "population graph")
+![evo forest.png](https://github.com/Melanol/bacteria_evo/blob/master/evo_forest.png "evo forest")
+![population graph.png](https://github.com/Melanol/bacteria_evo/blob/master/population_graph.png "population graph")
