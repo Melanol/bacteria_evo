@@ -20,12 +20,13 @@ plt.xlim(XLIM)
 plt.ylim(YLIM)
 plt.gca().axes.set_aspect(1)
 
-DROP_FOOD_EACH_N_STEPS = 30
+DROP_FOOD_EACH_N_STEPS = 5
 FOOD_MIN_ENERGY = 10
 FOOD_MAX_ENERGY = 100
 
 BACTERIA_N = 10
 MAX_START_SPEED = 5
+RAND_MOVE_AMPLITUTE = 0.03  # Adding randomness to movement to avoid bacterial singularity
 BACTERIA_MAX_START_ENERGY = 100
 MUTATION_CHANCE = 1
 MUTATION_VARIANCE = 0.1
@@ -77,21 +78,30 @@ class Bacterium:
 
     def closest_food(self):
         """Find closest food and return its coords"""
+        # Check if inside a food source:
+        for f in food_sources:
+            if ((f.x - self.x)**2 + (f.y - self.y)**2)**0.5 <= f.radius:
+                return f
+
+        # Check for centers and radiuses:
         closest_dist = math.inf
         closest = None
-        for food in food_sources:
-            dist = ((food.x - self.x) ** 2 + (food.y - self.y) ** 2) ** 0.5
+        for f in food_sources:
+            angle = math.atan2(self.y - f.y, self.x - f.x)
+            x = f.x + (f.radius * math.cos(angle))
+            y = f.y + (f.radius * math.sin(angle))
+            dist = ((x - self.x) ** 2 + (y - self.y) ** 2) ** 0.5
             if dist < closest_dist:
                 closest_dist = dist
-                closest = food
+                closest = f
         return closest
 
     @staticmethod
     def mutation_calc(attr):
         """Does the attr mutate? By how much?"""
         if random.random() <= MUTATION_CHANCE:
-            lower = attr * MUTATION_VARIANCE
-            return random.uniform(attr-lower, attr+lower)
+            amplitude = attr * MUTATION_VARIANCE
+            return random.uniform(attr - amplitude, attr + amplitude)
         else:
             return attr
 
@@ -100,8 +110,8 @@ class Bacterium:
         speed = self.mutation_calc(self.speed)
         max_energy = self.mutation_calc(self.max_energy)
         # Spawning close to the parent:
-        new_b_x = self.x + random.uniform(-1, 1)
-        new_b_y = self.y + random.uniform(-1, 1)
+        new_b_x = self.x + random.uniform(-0.5, 0.5)
+        new_b_y = self.y + random.uniform(-0.5, 0.5)
         Bacterium(new_b_x, new_b_y, speed, max_energy)
 
 for _ in range(BACTERIA_N):
@@ -125,7 +135,7 @@ while True:
             circle = plt.Circle((f.x, f.y), f.radius, color='y', alpha=f.energy / (f.radius * 20))
             plt.gca().add_patch(circle)
         for b in bacteria:
-            plt.scatter(b.x, b.y, color=b.color(), marker='s')
+            plt.scatter(b.x, b.y, color=b.color())
         for m in death_markers:
             plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
 
@@ -138,6 +148,11 @@ while True:
 
     # Spend energy no matter what:
     for b in bacteria:
+        # print(b.x, b.y)
+        b.x += random.uniform(-RAND_MOVE_AMPLITUTE, RAND_MOVE_AMPLITUTE)
+        b.y += random.uniform(-RAND_MOVE_AMPLITUTE, RAND_MOVE_AMPLITUTE)
+        # print(b.x, b.y)
+        # print()
         b.energy -= 0.1
         if b.energy <= 0:
             death_list.append(b)
@@ -164,8 +179,8 @@ while True:
                             death_list.append(b)
                         else:
                             b.energy -= energy_to_be_removed
-                            b.x += x
-                            b.y += y
+                            b.x += random.uniform(x - RAND_MOVE_AMPLITUTE, x + RAND_MOVE_AMPLITUTE)
+                            b.y += random.uniform(y - RAND_MOVE_AMPLITUTE, y + RAND_MOVE_AMPLITUTE)
 
                     else:  # No need to move => eat
                         b.eating = True
