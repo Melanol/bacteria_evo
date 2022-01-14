@@ -7,9 +7,7 @@ import matplotlib.pyplot as plt
 import imageio
 
 
-# TODO: Random movement not allowing to get inside a food source in 1 turn
-
-MAKE_GIF = False
+MAKE_GIF = True
 FRAME_DURATION = 0.3
 
 STEPS = 100
@@ -29,7 +27,6 @@ FOOD_MAX_ENERGY = 100
 
 ADAMS_N = 5
 MAX_START_SPEED = 5
-RAND_MOVE_AMPLITUTE = 0.03  # Adding randomness to movement to avoid bacterial singularity
 BACTERIA_MAX_START_ENERGY = 100
 MUTATION_CHANCE = 1
 MUTATION_VARIANCE = 0.1
@@ -142,29 +139,24 @@ while True:
         Food()
 
     # Draw:
-    # if step % SAVE_IMAGE_EACH_N_STEPS == 0:
-    #     for f in food_sources:
-    #         circle = plt.Circle((f.x, f.y), f.radius, color='y', alpha=f.energy / (f.radius * 20))
-    #         plt.gca().add_patch(circle)
-    #     for b in bacteria:
-    #         plt.scatter(b.x, b.y, color=b.color())
-    #     for m in death_markers:
-    #         plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
-    #
-    #     plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
-    #     plt.savefig(f'./runs/{TIME}/images/{step}')
-    #     plt.clf()
-    #     plt.xlim(XLIM)
-    #     plt.ylim(YLIM)
-    #     plt.gca().axes.set_aspect(1)
+    if step % SAVE_IMAGE_EACH_N_STEPS == 0:
+        for f in food_sources:
+            circle = plt.Circle((f.x, f.y), f.radius, color='y', alpha=f.energy / (f.radius * 20))
+            plt.gca().add_patch(circle)
+        for b in bacteria:
+            plt.scatter(b.x, b.y, color=b.color())
+        for m in death_markers:
+            plt.scatter(m[0], m[1], color='black', marker='x', zorder=1)
+
+        plt.title(f'Step: {step}; Bacteria remaining: {len(bacteria)}')
+        plt.savefig(f'./runs/{TIME}/images/{step}')
+        plt.clf()
+        plt.xlim(XLIM)
+        plt.ylim(YLIM)
+        plt.gca().axes.set_aspect(1)
 
     # Spend energy no matter what:
     for b in bacteria:
-        # print(b.x, b.y)
-        b.x += random.uniform(-RAND_MOVE_AMPLITUTE, RAND_MOVE_AMPLITUTE)
-        b.y += random.uniform(-RAND_MOVE_AMPLITUTE, RAND_MOVE_AMPLITUTE)
-        # print(b.x, b.y)
-        # print()
         b.energy -= 0.1
         if b.energy <= 0:
             death_list.append(b)
@@ -191,8 +183,8 @@ while True:
                             death_list.append(b)
                         else:
                             b.energy -= energy_to_be_removed
-                            b.x += random.uniform(x - RAND_MOVE_AMPLITUTE, x + RAND_MOVE_AMPLITUTE)
-                            b.y += random.uniform(y - RAND_MOVE_AMPLITUTE, y + RAND_MOVE_AMPLITUTE)
+                            b.x += x
+                            b.y += y
 
                     else:  # No need to move => eat
                         b.eating = True
@@ -288,8 +280,7 @@ for adam in adams:
     adam.children.sort(key=lambda c: int(c.birth_step), reverse=True)
     for c in adam.children:
         tree(c)
-# plt.savefig(f'./runs/{TIME}/evo forest.png')
-plt.show()
+plt.savefig(f'./runs/{TIME}/evo forest.png')
 
 # GIF:
 if MAKE_GIF:
