@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import imageio
 
 
+# TODO: Random movement not allowing to get inside a food source in 1 turn
+
 MAKE_GIF = True
 FRAME_DURATION = 0.3
 
@@ -117,6 +119,7 @@ class Bacterium:
 for _ in range(BACTERIA_N):
     Bacterium()
 
+
 Food()
 step = 1
 reproduced = 0
@@ -124,6 +127,7 @@ died = 0
 death_list = []
 death_markers = []
 death_markers_to_be_removed = []
+graph_points = [[], []]
 while True:
     # Drop food:
     if step % DROP_FOOD_EACH_N_STEPS == 0:
@@ -219,6 +223,10 @@ while True:
         death_markers.remove(m)
     death_markers_to_be_removed = []
 
+    # Graph:
+    graph_points[0].append(step)
+    graph_points[1].append(len(bacteria))
+
     # Finishing the run:
     if step == STEPS:
         print()
@@ -241,6 +249,11 @@ while True:
         print(f'Initial number: {BACTERIA_N}; Survived: {len(bacteria)}; Reproduced: {reproduced}; Died: {died}')
         break
     step += 1
+
+
+plt.clf()
+plt.plot(graph_points[0], graph_points[1])
+plt.show()
 
 if MAKE_GIF:
     filenames = sorted(os.listdir(f'./runs/{TIME}'), key=lambda x: int(x[:-4]))
