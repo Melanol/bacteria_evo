@@ -253,7 +253,7 @@ while True:
 
 # Population graph:
 plt.clf()
-plt.plot(graph_points[0], graph_points[1])
+plt.fill_between(graph_points[0], graph_points[1])
 plt.title('Population graph')
 plt.savefig(f'./runs/{TIME}/population graph.png')
 
@@ -280,6 +280,7 @@ for adam in adams:
     adam.children.sort(key=lambda c: int(c.birth_step), reverse=True)
     for c in adam.children:
         tree(c)
+plt.title('Evo forest')
 plt.savefig(f'./runs/{TIME}/evo forest.png')
 
 # GIF:
